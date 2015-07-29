@@ -18,8 +18,8 @@
   ],
   "license": "MIT",
   "main": [
-    "src/bower/waypoints/**/*.js",
-    "src/native.history.js",
+    "src/bower/waypoints/*.js",
+    "src/bower/native.history.js",
     "src/bsp-infinite-content-plugin.js",
     "src/bsp-infinite-content.js"
   ],

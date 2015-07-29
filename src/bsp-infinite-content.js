@@ -36,7 +36,7 @@ import $ from 'jquery';
 import bsp_utils from 'bsp-utils';
 import waypoints from 'bower/waypoints/jquery.waypoints';
 import infinite from 'bower/waypoints/infinite';
-import historyAPI from 'native.history';
+import historyAPI from 'bower/native.history';
 
 var bsp_infinite_scroll = {
 
