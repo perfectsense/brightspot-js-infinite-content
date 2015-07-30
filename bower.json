@@ -21,11 +21,7 @@
   ],
   "license": "MIT",
   "main": [
-    "src/bower/waypoints/infinite.js",
-    "src/bower/waypoints/jquery.waypoints.js",
-    "src/bower/native.history.js",
-    "src/bsp-infinite-content-plugin.js",
-    "src/bsp-infinite-content.js"
+    "dist/**/*.js"
   ],
   "name": "bsp-infinite-content",
   "version": "0.0.1"
