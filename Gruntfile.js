@@ -47,20 +47,15 @@ module.exports = function(grunt) {
 					{
 						cwd: '<%= buildDir %>/waypoints/lib',
 						expand: true,
-						src: ['jquery.waypoints.js'],
-						dest: '<%= distDir %>/waypoints/'
-					},
-					{
-						cwd: '<%= buildDir %>/waypoints/lib/shortcuts',
-						expand: true,
-						src: ['infinite.js'],
-						dest: '<%= distDir %>/waypoints/'
+						flatten: true,
+						src: ['jquery.waypoints.js', 'shortcuts/infinite.js'],
+						dest: '<%= distDir %>/'
 					},
 					{
 						cwd: '<%= buildDir %>/history.js/scripts/bundled-uncompressed/html5',
 						expand: true,
 						src: ['native.history.js'],
-						dest: '<%= distDir %>/history.js/'
+						dest: '<%= distDir %>/'
 					}
 				]
 			}
