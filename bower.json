@@ -21,7 +21,8 @@
   ],
   "license": "MIT",
   "main": [
-    "dist/**/*.js"
+    "dist/bsp-infinite-content.js",
+    "dist/bsp-infinite-content-plugin.js"
   ],
   "name": "bsp-infinite-content",
   "version": "0.0.1"
