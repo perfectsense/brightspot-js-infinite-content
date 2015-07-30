@@ -6,10 +6,13 @@
     }
   ],
   "dependencies": {
-    "jquery": ">=1.7.0",
-    "bsp-utils": ">=1.0.0"
+    "jquery"      : ">=1.7.0",
+    "bsp-utils"   : ">=1.0.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "waypoints"   : "3.1.1",
+    "history.js"  : "1.8.0"
+  },
   "homepage": "https://github.com/perfectsense/brightspot-js-toggle-item",
   "ignore": ["demo","Gruntfile.js","package.json",".gitignore"],
   "keywords": [
@@ -18,7 +21,8 @@
   ],
   "license": "MIT",
   "main": [
-    "src/bower/waypoints/*.js",
+    "src/bower/waypoints/infinite.js",
+    "src/bower/waypoints/jquery.waypoints.js",
     "src/bower/native.history.js",
     "src/bsp-infinite-content-plugin.js",
     "src/bsp-infinite-content.js"
