@@ -23,10 +23,10 @@
   "main": [
     "dist/bsp-infinite-content.js",
     "dist/bsp-infinite-content-plugin.js",
-    "dist/history.js/native.history.js",
-    "dist/waypoints/infinite.js",
-    "dist/waypoints/jquery.waypoints.js"
+    "dist/native.history.js",
+    "dist/infinite.js",
+    "dist/jquery.waypoints.js"
   ],
   "name": "bsp-infinite-content",
-  "version": "0.0.1"
+  "version": "0.0.2"
 }
