@@ -66,6 +66,12 @@ var bsp_infinite_scroll = {
         // setup nav Module selector so we can only crawl the DOM once
         self.$navModule = $(self.settings.navModuleSel);
 
+        // if we do not have a load more link, so we need to get out, there will be no infinite load
+        self.$loadMoreLink = self.$el.find(self.settings.triggerSel);    
+        if (!self.$loadMoreLink.length) {
+            return false;
+        }
+
         // create infinite scroll to start with. This is for the "load more" at the bottom of the article
         self.createInfiniteScroll();
 
