@@ -1,8 +1,9 @@
 /**
- * The current infinite scroll is essentially just a wrapper for the jquery waypoints ifinite functionality. 
- * Surround the infinite load content with a wrapper, give your content the appropriate class, and 
+ *
+ * The current infinite scroll is essentially just a wrapper for the jquery waypoints ifinite functionality.
+ * Surround the infinite load content with a wrapper, give your content the appropriate class, and
  * create a "load more" link outside the wrapper which links to the next piece of content. Once
- * the next piece of content doesn't contain the "load more" link, the infinite loading stops. 
+ * the next piece of content doesn't contain the "load more" link, the infinite loading stops.
  *
  * <div class="bsp-infinite-load-wrapper" data-bsp-infinite-scroll data-infinite-load-item-url="myURL.html">
  *      <div class="bsp-infinite-load-item">
@@ -14,18 +15,18 @@
  *
  * We also support an additional nav where we can indicate the status as we scroll down the page
  *
- * This is the markup for the load status. This plugin will check the top of the content as you 
+ * This is the markup for the load status. This plugin will check the top of the content as you
  * scroll and when it loads and you get to that item, it will mark it as current on the li
- * 
+ *
  * <ul class="bsp-infinite-load-status">
  *      <li><a href="myURL.html">Current Article</a></li>
  *      <li><a href="next.html">Next Article</a></li>
  * </ul>
  *
  * Lastly, we are doing light history management. Deciding to just do a simple replaceState on the history
- * this go around. It accomplishes us changing the URL for social media purposes and since this isn't a 
+ * this go around. It accomplishes us changing the URL for social media purposes and since this isn't a
  * big standalone single app page that tries to load up and down, we don't want to have to deal with
- * back button handling. We can enhance later if need be. 
+ * back button handling. We can enhance later if need be.
  *
  */
 
@@ -40,14 +41,16 @@ import historyAPI from 'native.history';
 
 var bsp_infinite_scroll = {
 
-	defaults: {
+    defaults: {
+        // wrapper selector
         // selector used for each infinite load item
-        'itemSel'       : '.bsp-infinite-load-item', 
+        'itemSel'       : '.bsp-infinite-load-item',
         // selector for the trigger which should contain a link to the next article inside of it
-		'triggerSel'    : '.bsp-infinite-load-trigger', 
+        'triggerSel'    : '.bsp-infinite-load-trigger',
          // we have the optional marking of a status module. The status module should contain a list of links
          // and this plugin will mark the current item in view in this status list
         'navModuleSel'  : '.bsp-infinite-load-status',
+        'navLinkSel'    : '.bsp-infinite-load-status ul li a',
         // the status list item gets this class to mark the current item
         'currentItemClass' : 'bsp-infinite-load-current',
         // we have to fi
@@ -55,35 +58,71 @@ var bsp_infinite_scroll = {
 
         'additionalOffset' : 50,
         'scrollSpeed'      : 350
-	},
+    },
 
     init: function($el, options) {
 
-    	var self = this;
-    	self.$el = $el;
-    	self.settings = $.extend({}, self.defaults, options);
+        var self = this;
+        self.$el = $el;
+        self.settings = $.extend({}, self.defaults, options);
 
-        // setup nav Module selector so we can only crawl the DOM once
         self.$navModule = $(self.settings.navModuleSel);
+        self.$loadMoreLink = self.$el.find(self.settings.triggerSel);
+        self.useLoadMoreLink = true;
+
+        // if we do not have nav or load more, get out
+        if (!self.$loadMoreLink.length && !self.$navModule.length) {
+            return false;
+        }
+
+        // if we have a the load more link, we want to use it to get the next article URL
+        if (!self.$loadMoreLink.length) {
+            self.useLoadMoreLink = false;
+            self.articleList = self._createArticleListFromNav();
+        }
 
         // create infinite scroll to start with. This is for the "load more" at the bottom of the article
         self.createInfiniteScroll();
 
         // create the waypoints for the nav for when the user scrolls between articles, so the nav gets marked
-        self.createItemWaypointsForNav();  
+        self.createItemWaypointsForNav();
 
         // we have the first bit of content (loaded by server), replace the link on the first item
         // this function gets called by the wayponts as you scroll past articles otherwise
-        self.replaceNavLinkWithScrollEvent();       
+        self.replaceNavLinkWithScrollEvent();
     },
 
-    // we create the waypoints for the top of the content so that we can determine what 
+    _getNextArticle: function() {
+        var self = this;
+
+        if (self.useLoadMoreLink) {
+            return self.$loadMoreLink.attr('href');
+        } else {
+            var currentUrl = self.$el.find(self.settings.itemSel + ':last').attr('data-bsp-infinite-load-item-url');
+            var currentIndex = $.inArray(currentUrl, self.articleList);
+            return self.articleList[currentIndex+1] || false;
+        }
+
+    },
+
+    _createArticleListFromNav: function() {
+        var self = this;
+        var articleList = new Array();
+
+        $(self.settings.navLinkSel).each(function() {
+            articleList.push($(this).attr('href'));
+        });
+
+        return articleList;
+    },
+
+    // we create the waypoints for the top of the content so that we can determine what
     // content is on the screen to mark our nav module with the current position
     createItemWaypointsForNav: function() {
         var self = this;
 
         // if there is no nav module, there is nothing to do here
-        if (!self.$navModule) { 
+        if (!self.$navModule) {
             return;
         }
 
@@ -125,18 +164,52 @@ var bsp_infinite_scroll = {
     createInfiniteScroll: function() {
         var self = this;
 
-        self.infinite = new Waypoint.Infinite({
-            element   : self.$el[0],
-            items     : self.settings.itemSel,
-            more      : self.settings.triggerSel,
-            onAfterPageLoad : function() {
-                // after we load each item back into the DOM create the waypoints for it to mark itself in the nav
-                self.createItemWaypointsForNav();
+        self.infinite = new Waypoint({
+            element : self.$el[0],
+            handler: function(direction) {
 
-                // and also remove it's link in the nav with a scroll event
-                self.replaceNavLinkWithScrollEvent();
-            }
+                if(direction === 'down') {
+
+                    var url = self._getNextArticle();
+
+                    if (url) {
+
+                        $.get(url, function(data) {
+
+                            var $infiniteLoadContent = $(data).find(self.settings.itemSel);
+
+                            self.$loadMoreLink.remove();
+                            self.$el.append($infiniteLoadContent);
+
+                            // after we load each item back into the DOM create the waypoints for it to mark itself in the nav
+                            self.createItemWaypointsForNav();
+
+                            // and also remove it's link in the nav with a scroll event
+                            self.replaceNavLinkWithScrollEvent();
+
+                        });
+
+                    }
+
+                }
+
+            },
+            offset: 'bottom-in-view'
+
         });
+
+        // self.infinite = new Waypoint.Infinite({
+        //     element   : self.$el[0],
+        //     items     : self.settings.itemSel,
+        //     more      : self.settings.triggerSel,
+        //     onAfterPageLoad : function() {
+        //         // after we load each item back into the DOM create the waypoints for it to mark itself in the nav
+        //         self.createItemWaypointsForNav();
+
+        //         // and also remove it's link in the nav with a scroll event
+        //         self.replaceNavLinkWithScrollEvent();
+        //     }
+        // });
 
     },
 
@@ -178,7 +251,7 @@ var bsp_infinite_scroll = {
     markCurrentInNavModule: function() {
         var self = this;
         var $navLink = $(self.settings.navModuleSel).find('a[href="' + self.currentArticleUrl + '"]');
-        
+
         // if there is no nav module, there is nothing to do here
         if (!self.$navModule) { return; }
 
@@ -208,7 +281,7 @@ var bsp_infinite_scroll = {
         var bodyPadding = parseInt($('body').css('padding-top'));
 
         // item we want (and adding any body top padding if we have fixed positioning)
-        var itemScroll = $targetElement.offset().top - bodyPadding; 
+        var itemScroll = $targetElement.offset().top - bodyPadding;
 
         // if we are scrolling to the bottom of the element instead, add back the body padding and also the height of the element
         if (options.location === 'bottom') {
