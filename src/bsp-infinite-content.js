@@ -55,6 +55,8 @@ var bsp_infinite_scroll = {
         'currentItemClass' : 'bsp-infinite-load-current',
         // we have to fi
         'itemUrlAttr'   : 'bsp-infinite-load-item-url',
+        // the loading icon class
+        'loadingIconClass' : 'bsp-loading-icon',
 
         'additionalOffset' : 50,
         'scrollSpeed'      : 350
@@ -174,11 +176,16 @@ var bsp_infinite_scroll = {
 
                     if (url) {
 
+                        self.$loadingIcon = $('<div class="' + self.settings.loadingIconClass + '"></div>').appendTo(self.$el);
+
                         $.get(url, function(data) {
 
                             var $infiniteLoadContent = $(data).find(self.settings.itemSel);
 
+                            self.$loadingIcon.remove();
+
                             self.$loadMoreLink.remove();
+
                             self.$el.append($infiniteLoadContent);
 
                             // after we load each item back into the DOM create the waypoints for it to mark itself in the nav
