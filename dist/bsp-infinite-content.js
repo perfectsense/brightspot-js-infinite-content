@@ -36,6 +36,7 @@
 import $ from 'jquery';
 import bsp_utils from 'bsp-utils';
 import waypoints from 'jquery.waypoints';
+import infinite from 'infinite';
 import historyAPI from 'native.history';
 
 var bsp_infinite_scroll = {
@@ -140,12 +141,19 @@ var bsp_infinite_scroll = {
                 // it means the title or top is close to the location where the original was
                 if(direction === 'down') {
                     self.currentArticleUrl = $(this.element).data(self.settings.itemUrlAttr);
+                    self.title = $(this.element).data('meta-title') || '';
                 }
 
                 // if we hit it on the way up, that means we are scrolling up, so go ahead and toss the previous one there
                 // as you're going that direction
                 if(direction === 'up') {
                     self.currentArticleUrl = $(this.element).prev().data(self.settings.itemUrlAttr);
+                    self.title = $(this.element).prev().data('meta-title') || '';
+                }
+
+                // if we do not find a title, grab the title out of the document and add it, so it's there for next time
+                if (!self.title) {
+                    $(this.element).data('meta-title', $(document).find('title').text());
                 }
 
                 // helper function to do the CSS classing
@@ -177,15 +185,28 @@ var bsp_infinite_scroll = {
 
                         self.$loadingIcon = $('<div class="' + self.settings.loadingIconClass + '"></div>').appendTo(self.$el);
 
+                        self.$el.trigger('bsp-infinite-content:before-content-loaded');
+
                         $.get(url, function(data) {
 
-                            var $infiniteLoadContent = $(data).find(self.settings.itemSel);
+                            // sanitize our data so we can find things in it easily
+                            var $wrapper = $('<div>').html(data);
+
+                            var $infiniteLoadContent = $wrapper.find(self.settings.itemSel);
+
+                            // grab the title of the article so we can add it into history
+                            self.title = $wrapper.find('title').text() || '';
+                            self.createHistoryEntry();
+
+                            $infiniteLoadContent.data('meta-title',self.title);
 
                             self.$loadingIcon.remove();
 
                             self.$loadMoreLink.remove();
 
                             self.$el.append($infiniteLoadContent);
+
+                            self.$el.trigger('bsp-infinite-content:content-loaded');
 
                             // after we load each item back into the DOM create the waypoints for it to mark itself in the nav
                             self.createItemWaypointsForNav();
@@ -271,9 +292,14 @@ var bsp_infinite_scroll = {
     createHistoryEntry: function() {
         var self = this;
 
+        // if we don't have a title that has been set, use the document
+        if (!self.title) {
+            self.title = $(document).find('title').text();
+        }
+
         // Replace state in History API vs Push. We don't want to deal with the back
         // and forward buttons. That just gets too complicated and there is no need
-        History.replaceState({},"",self.currentArticleUrl);
+        History.replaceState({}, self.title ,self.currentArticleUrl);
     },
 
     // we can go as crazy as we want with the scrolling code here. For now, simple jquery
