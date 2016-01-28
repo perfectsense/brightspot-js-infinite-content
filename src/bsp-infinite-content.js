@@ -5,13 +5,13 @@
  * create a "load more" link outside the wrapper which links to the next piece of content. Once
  * the next piece of content doesn't contain the "load more" link, the infinite loading stops.
  *
- * <div class="bsp-infinite-load-wrapper" data-bsp-infinite-scroll data-infinite-load-item-url="myURL.html">
- *      <div class="bsp-infinite-load-item">
+ * <div class="bsp-infinite-load-wrapper" data-bsp-infinite-scroll>
+ *      <div class="bsp-infinite-load-item" data-infinite-load-item-url="myURL.html">
  *          My Item Content Here
+ *          <a class="bsp-infinite-load-trigger" href="next.html">Next Content</a>
  *      </div>
  *      <!-- The plugin will place the bsp-infinite-load-item div out of next.html here -->
  * </div>
- * <a class="bsp-infinite-load-trigger" href="next.html">Next Content</a>
  *
  * We also support an additional nav where we can indicate the status as we scroll down the page
  *
@@ -36,7 +36,6 @@
 import $ from 'jquery';
 import bsp_utils from 'bsp-utils';
 import waypoints from 'jquery.waypoints';
-import infinite from 'infinite';
 import historyAPI from 'native.history';
 
 var bsp_infinite_scroll = {
@@ -98,6 +97,8 @@ var bsp_infinite_scroll = {
         var self = this;
 
         if (self.useLoadMoreLink) {
+            // get latest load more link
+            self.$loadMoreLink = self.$el.find(self.settings.triggerSel  + ':last');
             return self.$loadMoreLink.attr('href');
         } else {
             var currentUrl = self.$el.find(self.settings.itemSel + ':last').attr('data-bsp-infinite-load-item-url');
@@ -224,19 +225,6 @@ var bsp_infinite_scroll = {
             offset: 'bottom-in-view'
 
         });
-
-        // self.infinite = new Waypoint.Infinite({
-        //     element   : self.$el[0],
-        //     items     : self.settings.itemSel,
-        //     more      : self.settings.triggerSel,
-        //     onAfterPageLoad : function() {
-        //         // after we load each item back into the DOM create the waypoints for it to mark itself in the nav
-        //         self.createItemWaypointsForNav();
-
-        //         // and also remove it's link in the nav with a scroll event
-        //         self.replaceNavLinkWithScrollEvent();
-        //     }
-        // });
 
     },
 
