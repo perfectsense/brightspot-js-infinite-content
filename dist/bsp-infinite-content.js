@@ -18,10 +18,12 @@
  * This is the markup for the load status. This plugin will check the top of the content as you
  * scroll and when it loads and you get to that item, it will mark it as current on the li
  *
- * <ul class="bsp-infinite-load-status">
- *      <li><a href="myURL.html">Current Article</a></li>
- *      <li><a href="next.html">Next Article</a></li>
- * </ul>
+ * <div class="bsp-infinite-load-status">
+ *      <ul>
+ *          <li><a href="myURL.html">Current Article</a></li>
+ *          <li><a href="next.html">Next Article</a></li>
+ *      </ul>
+ * </div>
  *
  * Lastly, we are doing light history management. Deciding to just do a simple replaceState on the history
  * this go around. It accomplishes us changing the URL for social media purposes and since this isn't a
@@ -43,22 +45,23 @@ var bsp_infinite_scroll = {
     defaults: {
         // wrapper selector
         // selector used for each infinite load item
-        'itemSel'       : '.bsp-infinite-load-item',
+        'itemSel'           : '.bsp-infinite-load-item',
         // selector for the trigger which should contain a link to the next article inside of it
-        'triggerSel'    : '.bsp-infinite-load-trigger',
+        'triggerSel'        : '.bsp-infinite-load-trigger',
          // we have the optional marking of a status module. The status module should contain a list of links
          // and this plugin will mark the current item in view in this status list
-        'navModuleSel'  : '.bsp-infinite-load-status',
-        'navLinkSel'    : '.bsp-infinite-load-status ul li a',
+        'navModuleSel'      : '.bsp-infinite-load-status',
+        'navLinkSel'        : '.bsp-infinite-load-status ul li a',
         // the status list item gets this class to mark the current item
-        'currentItemClass' : 'bsp-infinite-load-current',
+        'currentItemClass'  : 'bsp-infinite-load-current',
         // we have to fi
-        'itemUrlAttr'   : 'bsp-infinite-load-item-url',
+        'itemUrlAttr'       : 'bsp-infinite-load-item-url',
         // the loading icon class
-        'loadingIconClass' : 'bsp-loading-icon',
+        'loadingIconClass'  : 'bsp-loading-icon',
 
-        'additionalOffset' : 50,
-        'scrollSpeed'      : 350
+        'additionalOffset'  : 50,
+        'scrollSpeed'       : 350,
+        'historyReplace'    : true
     },
 
     init: function($el, options) {
@@ -279,6 +282,11 @@ var bsp_infinite_scroll = {
 
     createHistoryEntry: function() {
         var self = this;
+
+        // if we do not want to replace the history, get out
+        if (!self.settings.historyReplace) {
+            return;
+        }
 
         // if we don't have a title that has been set, use the document
         if (!self.title) {
