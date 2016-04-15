@@ -188,6 +188,7 @@ var bsp_infinite_scroll = {
                 if(direction === 'down') {
 
                     var url = self._getNextArticle();
+                    var extraParams = '';
 
                     if (url) {
 
