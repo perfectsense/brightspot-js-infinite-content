@@ -25,6 +25,9 @@
  *      </ul>
  * </div>
  *
+ * We can add some additional params to the ajaxed URL. Let's say you want to add a _context to only get partial HTML or something
+ * similar, you can do that by passing a JSON object to the "extraParams" option which will get serialized and added to the original link href
+ *
  * Lastly, we are doing light history management. Deciding to just do a simple replaceState on the history
  * this go around. It accomplishes us changing the URL for social media purposes and since this isn't a
  * big standalone single app page that tries to load up and down, we don't want to have to deal with
@@ -61,7 +64,8 @@ var bsp_infinite_scroll = {
 
         'additionalOffset'  : 50,
         'scrollSpeed'       : 350,
-        'historyReplace'    : true
+        'historyReplace'    : true,
+        'extraParams'       : {}
     },
 
     init: function($el, options) {
@@ -184,6 +188,7 @@ var bsp_infinite_scroll = {
                 if(direction === 'down') {
 
                     var url = self._getNextArticle();
+                    var extraParams = '';
 
                     if (url) {
 
@@ -191,7 +196,20 @@ var bsp_infinite_scroll = {
 
                         self.$el.trigger('bsp-infinite-content:before-content-loaded');
 
-                        $.get(url, function(data) {
+                        // process the extraParams that might have been passed in
+                        if(typeof(self.settings.extraParams) === 'object') {
+                            $.each(self.settings.extraParams, function(key, value) {
+                                extraParams += '&' + key + '=' + value;
+                            });
+
+                            if(url.indexOf('?') === -1) {
+                                extraParams = extraParams.replace('&','?');
+                            }
+                        } else {
+                            extraParams = '';
+                        }
+
+                        $.get(url+extraParams, function(data) {
 
                             // sanitize our data so we can find things in it easily
                             var $wrapper = $('<div>').html(data);
