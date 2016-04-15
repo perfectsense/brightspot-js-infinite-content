@@ -202,7 +202,7 @@ var bsp_infinite_scroll = {
                                 extraParams += '&' + key + '=' + value;
                             });
 
-                            if(options.href.indexOf('?') === -1) {
+                            if(url.indexOf('?') === -1) {
                                 extraParams = extraParams.replace('&','?');
                             }
                         } else {
