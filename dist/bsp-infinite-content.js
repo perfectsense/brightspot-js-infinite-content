@@ -5,28 +5,23 @@
  * create a "load more" link outside the wrapper which links to the next piece of content. Once
  * the next piece of content doesn't contain the "load more" link, the infinite loading stops.
  *
- * <div class="bsp-infinite-load-wrapper" data-bsp-infinite-scroll>
- *      <div class="bsp-infinite-load-item" data-infinite-load-item-url="myURL.html">
+ * <div class="bsp-infinite-load-wrapper" data-bsp-infinite-scroll data-infinite-load-item-url="myURL.html">
+ *      <div class="bsp-infinite-load-item">
  *          My Item Content Here
- *          <a class="bsp-infinite-load-trigger" href="next.html">Next Content</a>
  *      </div>
  *      <!-- The plugin will place the bsp-infinite-load-item div out of next.html here -->
  * </div>
+ * <a class="bsp-infinite-load-trigger" href="next.html">Next Content</a>
  *
  * We also support an additional nav where we can indicate the status as we scroll down the page
  *
  * This is the markup for the load status. This plugin will check the top of the content as you
  * scroll and when it loads and you get to that item, it will mark it as current on the li
  *
- * <div class="bsp-infinite-load-status">
- *      <ul>
- *          <li><a href="myURL.html">Current Article</a></li>
- *          <li><a href="next.html">Next Article</a></li>
- *      </ul>
- * </div>
- *
- * We can add some additional params to the ajaxed URL. Let's say you want to add a _context to only get partial HTML or something
- * similar, you can do that by passing a JSON object to the "extraParams" option which will get serialized and added to the original link href
+ * <ul class="bsp-infinite-load-status">
+ *      <li><a href="myURL.html">Current Article</a></li>
+ *      <li><a href="next.html">Next Article</a></li>
+ * </ul>
  *
  * Lastly, we are doing light history management. Deciding to just do a simple replaceState on the history
  * this go around. It accomplishes us changing the URL for social media purposes and since this isn't a
@@ -48,24 +43,22 @@ var bsp_infinite_scroll = {
     defaults: {
         // wrapper selector
         // selector used for each infinite load item
-        'itemSel'           : '.bsp-infinite-load-item',
+        'itemSel'       : '.bsp-infinite-load-item',
         // selector for the trigger which should contain a link to the next article inside of it
-        'triggerSel'        : '.bsp-infinite-load-trigger',
+        'triggerSel'    : '.bsp-infinite-load-trigger',
          // we have the optional marking of a status module. The status module should contain a list of links
          // and this plugin will mark the current item in view in this status list
-        'navModuleSel'      : '.bsp-infinite-load-status',
-        'navLinkSel'        : '.bsp-infinite-load-status ul li a',
+        'navModuleSel'  : '.bsp-infinite-load-status',
+        'navLinkSel'    : '.bsp-infinite-load-status ul li a',
         // the status list item gets this class to mark the current item
-        'currentItemClass'  : 'bsp-infinite-load-current',
+        'currentItemClass' : 'bsp-infinite-load-current',
         // we have to fi
-        'itemUrlAttr'       : 'bsp-infinite-load-item-url',
+        'itemUrlAttr'   : 'bsp-infinite-load-item-url',
         // the loading icon class
-        'loadingIconClass'  : 'bsp-loading-icon',
+        'loadingIconClass' : 'bsp-loading-icon',
 
-        'additionalOffset'  : 50,
-        'scrollSpeed'       : 350,
-        'historyReplace'    : true,
-        'extraParams'       : {}
+        'additionalOffset' : 50,
+        'scrollSpeed'      : 350
     },
 
     init: function($el, options) {
@@ -104,8 +97,6 @@ var bsp_infinite_scroll = {
         var self = this;
 
         if (self.useLoadMoreLink) {
-            // get latest load more link
-            self.$loadMoreLink = self.$el.find(self.settings.triggerSel  + ':last');
             return self.$loadMoreLink.attr('href');
         } else {
             var currentUrl = self.$el.find(self.settings.itemSel + ':last').attr('data-bsp-infinite-load-item-url');
@@ -149,19 +140,12 @@ var bsp_infinite_scroll = {
                 // it means the title or top is close to the location where the original was
                 if(direction === 'down') {
                     self.currentArticleUrl = $(this.element).data(self.settings.itemUrlAttr);
-                    self.title = $(this.element).data('meta-title') || '';
                 }
 
                 // if we hit it on the way up, that means we are scrolling up, so go ahead and toss the previous one there
                 // as you're going that direction
                 if(direction === 'up') {
                     self.currentArticleUrl = $(this.element).prev().data(self.settings.itemUrlAttr);
-                    self.title = $(this.element).prev().data('meta-title') || '';
-                }
-
-                // if we do not find a title, grab the title out of the document and add it, so it's there for next time
-                if (!self.title) {
-                    $(this.element).data('meta-title', $(document).find('title').text());
                 }
 
                 // helper function to do the CSS classing
@@ -188,39 +172,14 @@ var bsp_infinite_scroll = {
                 if(direction === 'down') {
 
                     var url = self._getNextArticle();
-                    var extraParams = '';
 
                     if (url) {
 
                         self.$loadingIcon = $('<div class="' + self.settings.loadingIconClass + '"></div>').appendTo(self.$el);
 
-                        self.$el.trigger('bsp-infinite-content:before-content-loaded');
+                        $.get(url, function(data) {
 
-                        // process the extraParams that might have been passed in
-                        if(typeof(self.settings.extraParams) === 'object') {
-                            $.each(self.settings.extraParams, function(key, value) {
-                                extraParams += '&' + key + '=' + value;
-                            });
-
-                            if(url.indexOf('?') === -1) {
-                                extraParams = extraParams.replace('&','?');
-                            }
-                        } else {
-                            extraParams = '';
-                        }
-
-                        $.get(url+extraParams, function(data) {
-
-                            // sanitize our data so we can find things in it easily
-                            var $wrapper = $('<div>').html(data);
-
-                            var $infiniteLoadContent = $wrapper.find(self.settings.itemSel);
-
-                            // grab the title of the article so we can add it into history
-                            self.title = $wrapper.find('title').text() || '';
-                            self.createHistoryEntry();
-
-                            $infiniteLoadContent.data('meta-title',self.title);
+                            var $infiniteLoadContent = $(data).find(self.settings.itemSel);
 
                             self.$loadingIcon.remove();
 
@@ -228,13 +187,14 @@ var bsp_infinite_scroll = {
 
                             self.$el.append($infiniteLoadContent);
 
-                            self.$el.trigger('bsp-infinite-content:content-loaded');
-
                             // after we load each item back into the DOM create the waypoints for it to mark itself in the nav
                             self.createItemWaypointsForNav();
 
                             // and also remove it's link in the nav with a scroll event
                             self.replaceNavLinkWithScrollEvent();
+
+                            // save the new load more link 
+                            self.$loadMoreLink = self.$el.find(self.settings.triggerSel);
 
                         });
 
@@ -246,6 +206,19 @@ var bsp_infinite_scroll = {
             offset: 'bottom-in-view'
 
         });
+
+        // self.infinite = new Waypoint.Infinite({
+        //     element   : self.$el[0],
+        //     items     : self.settings.itemSel,
+        //     more      : self.settings.triggerSel,
+        //     onAfterPageLoad : function() {
+        //         // after we load each item back into the DOM create the waypoints for it to mark itself in the nav
+        //         self.createItemWaypointsForNav();
+
+        //         // and also remove it's link in the nav with a scroll event
+        //         self.replaceNavLinkWithScrollEvent();
+        //     }
+        // });
 
     },
 
@@ -301,19 +274,9 @@ var bsp_infinite_scroll = {
     createHistoryEntry: function() {
         var self = this;
 
-        // if we do not want to replace the history, get out
-        if (!self.settings.historyReplace) {
-            return;
-        }
-
-        // if we don't have a title that has been set, use the document
-        if (!self.title) {
-            self.title = $(document).find('title').text();
-        }
-
         // Replace state in History API vs Push. We don't want to deal with the back
         // and forward buttons. That just gets too complicated and there is no need
-        History.replaceState({}, self.title ,self.currentArticleUrl);
+        History.replaceState({},"",self.currentArticleUrl);
     },
 
     // we can go as crazy as we want with the scrolling code here. For now, simple jquery
